@@ -1,0 +1,2560 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ISRC Finder — Instant Song & Spotify ISRC Code Lookup</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+          },
+          keyframes: {
+            fadeUp: {
+              '0%': { opacity: '0', transform: 'translateY(8px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            shimmer: {
+              '0%': { backgroundPosition: '-200% 0' },
+              '100%': { backgroundPosition: '200% 0' },
+            },
+          },
+          animation: {
+            fadeUp: 'fadeUp 0.25s ease-out forwards',
+            shimmer: 'shimmer 1.8s linear infinite',
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="min-h-screen bg-slate-950 font-sans text-slate-100 antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
+  <!-- Ambient Background Glow -->
+  <div class="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+    <div class="absolute -top-40 left-1/2 h-96 w-[44rem] -translate-x-1/2 rounded-full bg-indigo-600/15 blur-3xl"></div>
+    <div class="absolute top-1/3 -right-32 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl"></div>
+    <div class="absolute bottom-0 -left-24 h-72 w-72 rounded-full bg-violet-600/10 blur-3xl"></div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="relative mx-auto flex min-h-screen w-full max-w-4xl flex-col px-4 py-8 sm:px-6 sm:py-12">
+    <!-- Header -->
+    <header class="text-center">
+      <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-indigo-300 shadow-sm">
+        <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+        <span>Global Catalog + Spotify URL Lookup</span>
+      </div>
+
+      <h1 class="bg-gradient-to-r from-white via-indigo-100 to-indigo-300 bg-clip-text text-3xl font-extrabold tracking-tight text-transparent sm:text-5xl">
+        ISRC Finder
+      </h1>
+
+      <p class="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-400 sm:text-base">
+        Search any song by title, artist, or <span class="font-medium text-emerald-300">Spotify link</span> to instantly find and copy its official
+        <span class="font-medium text-slate-200">International Standard Recording Code</span>.
+      </p>
+    </header>
+
+    <!-- Search & Controls Section -->
+    <section class="mt-8 w-full" aria-label="Song Search">
+      <!-- Search Bar Form -->
+      <form id="search-form" class="relative" autocomplete="off">
+        <div class="group flex flex-col gap-2 rounded-2xl border border-slate-700/70 bg-slate-900/80 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl transition-all duration-200 focus-within:border-indigo-500/80 focus-within:ring-4 focus-within:ring-indigo-500/15 sm:flex-row sm:items-center">
+          <!-- Song Name / URL Input Row -->
+          <div class="flex min-w-0 flex-1 items-center gap-2">
+            <!-- Search Icon -->
+            <div class="pl-3 text-slate-400 transition-colors group-focus-within:text-indigo-400">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+
+            <!-- Song Input Field -->
+            <input
+              id="search-input"
+              type="text"
+              placeholder="Song name, Spotify URL, or ISRC code..."
+              aria-label="Search for a song by name, Spotify URL, or ISRC code"
+              class="w-full min-w-0 bg-transparent py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none sm:text-base"
+            />
+          </div>
+
+          <!-- Optional Artist Filter -->
+          <div class="flex items-center gap-2 border-t border-slate-800 pt-2 sm:w-48 sm:border-l sm:border-t-0 sm:pl-3 sm:pt-0">
+            <input
+              id="artist-input"
+              type="text"
+              placeholder="Artist (optional)"
+              aria-label="Optional artist name filter"
+              class="w-full min-w-0 bg-transparent py-2 pl-3 text-sm text-white placeholder-slate-500 focus:outline-none sm:pl-0"
+            />
+            <!-- Clear Button -->
+            <button
+              id="clear-btn"
+              type="button"
+              aria-label="Clear search"
+              class="hidden rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-200"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Search Submit Button -->
+          <button
+            id="search-btn"
+            type="submit"
+            class="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 transition hover:bg-indigo-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span id="search-btn-label">Search</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Quick Example Chips -->
+      <div class="mt-3.5 flex flex-wrap items-center justify-center gap-2 text-xs">
+        <span class="text-slate-500">Try:</span>
+        <button
+          type="button"
+          data-query="Blinding Lights"
+          class="example-chip rounded-full border border-slate-800 bg-slate-900/70 px-3 py-1.5 font-medium text-slate-300 transition hover:border-indigo-500/50 hover:bg-indigo-500/10 hover:text-indigo-200 active:scale-95"
+        >
+          Blinding Lights
+        </button>
+        <button
+          type="button"
+          data-query="Bohemian Rhapsody"
+          class="example-chip rounded-full border border-slate-800 bg-slate-900/70 px-3 py-1.5 font-medium text-slate-300 transition hover:border-indigo-500/50 hover:bg-indigo-500/10 hover:text-indigo-200 active:scale-95"
+        >
+          Bohemian Rhapsody
+        </button>
+        <button
+          type="button"
+          data-query="Cruel Summer"
+          class="example-chip rounded-full border border-slate-800 bg-slate-900/70 px-3 py-1.5 font-medium text-slate-300 transition hover:border-indigo-500/50 hover:bg-indigo-500/10 hover:text-indigo-200 active:scale-95"
+        >
+          Cruel Summer
+        </button>
+        <button
+          type="button"
+          data-query="https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b"
+          title="Test pasting a Spotify track link"
+          class="example-chip inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 font-medium text-emerald-300 transition hover:border-emerald-400/60 hover:bg-emerald-500/20 hover:text-emerald-200 active:scale-95"
+        >
+          <svg class="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.59 14.42a.62.62 0 0 1-.85.21c-2.34-1.43-5.28-1.75-8.75-.96a.62.62 0 1 1-.28-1.21c3.8-.87 7.05-.5 9.67 1.11.29.18.38.56.21.85zm1.22-2.72a.78.78 0 0 1-1.07.26c-2.68-1.65-6.77-2.12-9.94-1.16a.78.78 0 1 1-.45-1.49c3.62-1.1 8.12-.57 11.2 1.32.37.22.48.7.26 1.07zm.1-2.83C14.7 8.96 9.39 8.78 6.32 9.72a.93.93 0 1 1-.54-1.78c3.52-1.07 9.39-.86 13.09 1.33a.93.93 0 0 1-.96 1.6z"/>
+          </svg>
+          Try Spotify Link
+        </button>
+      </div>
+
+      <!-- Controls Bar: Source Selector, Copy Format Badge, and ISRC Filter -->
+      <div class="mt-5 flex flex-col items-stretch justify-between gap-3 rounded-2xl border border-slate-800/80 bg-slate-900/50 p-3 backdrop-blur-md sm:flex-row sm:items-center">
+        <!-- Source Switcher -->
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-medium text-slate-400">Source:</span>
+          <div class="inline-flex rounded-xl border border-slate-800 bg-slate-950/80 p-1" role="group" aria-label="Catalog source">
+            <button
+              type="button"
+              data-source="all"
+              class="source-btn rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+            >
+              All Sources
+            </button>
+            <button
+              type="button"
+              data-source="deezer"
+              class="source-btn rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+            >
+              Deezer
+            </button>
+            <button
+              type="button"
+              data-source="musicbrainz"
+              class="source-btn rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+            >
+              MusicBrainz
+            </button>
+          </div>
+        </div>
+
+        <!-- Copy Format Pill & Filter Toggle -->
+        <div class="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
+          <div
+            class="inline-flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-950/80 px-2.5 py-1.5 text-[11px] text-slate-400"
+            title="Exact format copied to clipboard"
+          >
+            <span>Copy format:</span>
+            <code class="font-mono font-semibold text-indigo-300">ISRC:code</code>
+          </div>
+
+          <label class="inline-flex cursor-pointer items-center gap-2.5 select-none">
+            <span class="text-xs font-medium text-slate-300">Only with ISRC</span>
+            <div class="relative">
+              <input id="only-isrc-toggle" type="checkbox" class="peer sr-only" />
+              <div class="h-5 w-9 rounded-full border border-slate-700 bg-slate-800 transition peer-checked:border-indigo-500 peer-checked:bg-indigo-600"></div>
+              <div class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-slate-300 transition-transform peer-checked:translate-x-4 peer-checked:bg-white"></div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Subtle Educational Info Bar -->
+      <div class="mt-3 flex items-start gap-2.5 rounded-xl border border-slate-800/60 bg-slate-900/30 px-3.5 py-2.5 text-xs text-slate-400">
+        <svg class="mt-0.5 h-4 w-4 shrink-0 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <p class="leading-relaxed">
+          Can't find a song by name? Paste its <span class="font-medium text-emerald-300">Spotify song URL</span> (or Deezer / Apple Music link) right into the search bar to resolve the exact track and its 12-character ISRC code automatically.
+        </p>
+      </div>
+
+      <!-- Fallback / Info Banner (Hidden by Default) -->
+      <div
+        id="fallback-banner"
+        class="mt-3 hidden items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200"
+        role="status"
+      >
+        <div class="flex items-center gap-2.5">
+          <svg class="h-4 w-4 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span id="fallback-message"></span>
+        </div>
+        <button
+          id="dismiss-fallback"
+          type="button"
+          aria-label="Dismiss notice"
+          class="rounded-lg p-1 text-amber-300 transition hover:bg-amber-500/20"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Resolved Spotify / Streaming Link Card (Hidden by Default) -->
+    <section id="spotify-card-container" class="mt-5 hidden" aria-label="Resolved Streaming Link"></section>
+
+    <!-- Results Header (Count & Source Summary) -->
+    <div id="results-meta" class="mt-6 hidden items-center justify-between text-xs text-slate-400">
+      <div id="results-count" class="font-medium text-slate-300"></div>
+      <div id="results-source-badge" class="rounded-full border border-slate-800 bg-slate-900 px-2.5 py-1 text-[11px] font-medium text-slate-400"></div>
+    </div>
+
+    <!-- Results Container -->
+    <main id="results-container" class="mt-3 flex-1 space-y-3" aria-live="polite">
+      <!-- Initial Empty Welcome State -->
+      <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/30 px-6 py-14 text-center">
+        <div class="flex h-14 w-14 items-center justify-center rounded-2xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-400 shadow-inner">
+          <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+        </div>
+        <h2 class="mt-4 text-base font-semibold text-slate-200">Ready to look up ISRC codes</h2>
+        <p class="mt-1.5 max-w-md text-xs leading-relaxed text-slate-400 sm:text-sm">
+          Enter a song name, paste a <span class="text-emerald-300">Spotify song URL</span>, or enter a 12-character ISRC code above. Click any result's badge to copy it as <code class="font-mono text-indigo-300">ISRC:code</code>.
+        </p>
+      </div>
+    </main>
+
+    <!-- Load More Pagination Button (Hidden by Default) -->
+    <div id="load-more-container" class="mt-5 hidden justify-center">
+      <button
+        id="load-more-btn"
+        type="button"
+        class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-900/90 px-6 py-2.5 text-sm font-semibold text-slate-200 shadow-lg transition hover:border-indigo-500/60 hover:bg-indigo-500/10 hover:text-white active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <span id="load-more-label">Load More Songs</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 border-t border-slate-800/70 pt-6 text-center text-xs text-slate-500">
+      <p>
+        Powered by public catalogs (Deezer, MusicBrainz, Spotify oEmbed &amp; Odesli) • Runs 100% in your browser with no API keys.
+      </p>
+    </footer>
+  </div>
+
+  <!-- Toast Notification -->
+  <div
+    id="toast"
+    role="status"
+    aria-live="polite"
+    class="pointer-events-none fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 translate-y-4 items-center gap-2 rounded-full border border-emerald-500/40 bg-slate-900/95 px-4 py-2.5 text-xs font-semibold text-emerald-300 opacity-0 shadow-2xl shadow-black/60 backdrop-blur-md transition-all duration-200"
+  >
+    <svg class="h-4 w-4 shrink-0 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span id="toast-message">Copied to clipboard</span>
+  </div>
+
+  <!-- Hidden Audio Player for 30s Previews -->
+  <audio id="audio-player" preload="none"></audio>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // =========================================================================
+      // Constants & Application State
+      // =========================================================================
+      const PAGE_SIZE = 25;
+      const DEEZER_BATCH_SIZE = 5;
+      const DEEZER_BATCH_DELAY_MS = 220;
+
+      const state = {
+        preferredSource: 'all',     // 'all' | 'deezer' | 'musicbrainz'
+        activeResultSource: 'all',  // Source label for current results
+        onlyWithIsrc: false,        // Hide tracks without ISRCs
+        query: '',                  // Current song/link query
+        artistQuery: '',            // Current optional artist query
+        isLoading: false,           // Initial search loading state
+        isLoadingMore: false,       // Pagination loading state
+        error: null,                // Error string if failed
+        tracks: [],                 // Normalized track objects
+        searchToken: 0,             // Monotonic counter to ignore stale async responses
+        playingTrackId: null,       // Currently playing audio preview track ID
+        audioProgress: 0,           // 0 to 100 percentage
+        resolvedLink: null,         // Resolved Spotify / Deezer / Apple link summary
+        pagination: {
+          dzOffset: 0,
+          dzHasMore: false,
+          mbOffset: 0,
+          mbHasMore: false,
+        },
+      };
+
+      // =========================================================================
+      // DOM References
+      // =========================================================================
+      const dom = {
+        form: document.getElementById('search-form'),
+        input: document.getElementById('search-input'),
+        artistInput: document.getElementById('artist-input'),
+        clearBtn: document.getElementById('clear-btn'),
+        searchBtn: document.getElementById('search-btn'),
+        searchBtnLabel: document.getElementById('search-btn-label'),
+        exampleChips: document.querySelectorAll('.example-chip'),
+        sourceBtns: document.querySelectorAll('.source-btn'),
+        onlyIsrcToggle: document.getElementById('only-isrc-toggle'),
+        fallbackBanner: document.getElementById('fallback-banner'),
+        fallbackMessage: document.getElementById('fallback-message'),
+        dismissFallback: document.getElementById('dismiss-fallback'),
+        spotifyCardContainer: document.getElementById('spotify-card-container'),
+        resultsMeta: document.getElementById('results-meta'),
+        resultsCount: document.getElementById('results-count'),
+        resultsSourceBadge: document.getElementById('results-source-badge'),
+        resultsContainer: document.getElementById('results-container'),
+        loadMoreContainer: document.getElementById('load-more-container'),
+        loadMoreBtn: document.getElementById('load-more-btn'),
+        loadMoreLabel: document.getElementById('load-more-label'),
+        toast: document.getElementById('toast'),
+        toastMessage: document.getElementById('toast-message'),
+        audioPlayer: document.getElementById('audio-player'),
+      };
+
+      let toastTimer = null;
+
+      // =========================================================================
+      // Utility Helpers
+      // =========================================================================
+
+      /**
+       * Escapes HTML special characters to prevent XSS in dynamic templates.
+       */
+      function escapeHtml(value) {
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      /**
+       * Async delay helper for rate-limit friendly batching and retries.
+       */
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      /**
+       * Formats duration in seconds to m:ss.
+       */
+      function formatDuration(seconds) {
+        const total = Number(seconds);
+        if (!Number.isFinite(total) || total <= 0) return '';
+        const mins = Math.floor(total / 60);
+        const secs = Math.floor(total % 60);
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+      }
+
+      /**
+       * Extracts a 4-digit release year from ISO date strings.
+       */
+      function extractYear(dateString) {
+        if (!dateString) return '';
+        const match = String(dateString).match(/\b(19|20)\d{2}\b/);
+        return match ? match[0] : '';
+      }
+
+      /**
+       * Normalizes, uppercases, and deduplicates an array of ISRC strings.
+       */
+      function normalizeIsrcList(list) {
+        if (!Array.isArray(list)) return [];
+        const seen = new Set();
+        const cleaned = [];
+        for (const item of list) {
+          const code = String(item || '')
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, '');
+          if (code.length === 12 && !seen.has(code)) {
+            seen.add(code);
+            cleaned.push(code);
+          }
+        }
+        return cleaned;
+      }
+
+      /**
+       * Removes special Lucene syntax characters so MusicBrainz queries do not fail on punctuation.
+       */
+      function sanitizeMusicBrainzQuery(text) {
+        return String(text || '')
+          .replace(/[+\-!(){}[\]^"~*?:\\/]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      /**
+       * Normalizes track title / artist strings for cross-catalog deduplication (Unicode-safe).
+       */
+      function normalizeMatchKey(text) {
+        return String(text || '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/\((official|audio|video|lyric|lyrics|visualizer|hd|hq)[^)]*\)/gi, ' ')
+          .replace(/\[[^\]]*\]/g, ' ')
+          .replace(/[^\p{L}\p{N}]+/gu, ' ')
+          .trim();
+      }
+
+      /**
+       * Strips common video/noise words when broadening a low-result query.
+       */
+      function cleanFallbackQuery(query) {
+        return String(query || '')
+          .replace(/\((official|music\s*video|lyric|lyrics|audio|hd|4k|full\s*song)[^)]*\)/gi, ' ')
+          .replace(/\[[^\]]*\]/g, ' ')
+          .replace(/\b(feat\.?|ft\.?|official|video|lyrics?|audio|full\s*song)\b/gi, ' ')
+          .replace(/[^\p{L}\p{N}\s]+/gu, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      /**
+       * Formats an ISRC code into the exact required copy format: ISRC:<CODE>
+       */
+      function formatIsrcForCopy(code) {
+        const clean = String(code || '').trim().toUpperCase();
+        return `ISRC:${clean}`;
+      }
+
+      /**
+       * Detects Spotify, Deezer, or Apple Music track URLs / URIs pasted into the search bar.
+       */
+      function parseMusicUrl(rawInput) {
+        const text = String(rawInput || '').trim();
+        if (!text) return null;
+
+        // 1. Spotify track URL (open.spotify.com, intl-xx, play.spotify.com)
+        const spUrlMatch = text.match(/(?:open|play)\.spotify\.com\/(?:intl-[a-z-]+\/)?track\/([A-Za-z0-9]{22})/i);
+        if (spUrlMatch) {
+          return {
+            platform: 'spotify',
+            id: spUrlMatch[1],
+            canonicalUrl: `https://open.spotify.com/track/${spUrlMatch[1]}`,
+          };
+        }
+
+        // 2. Spotify URI (spotify:track:...)
+        const spUriMatch = text.match(/^spotify:track:([A-Za-z0-9]{22})$/i);
+        if (spUriMatch) {
+          return {
+            platform: 'spotify',
+            id: spUriMatch[1],
+            canonicalUrl: `https://open.spotify.com/track/${spUriMatch[1]}`,
+          };
+        }
+
+        // 3. Spotify mobile short link (spotify.link / spoti.fi)
+        const spShortMatch = text.match(/https?:\/\/(?:spotify\.link|spoti\.fi)\/[A-Za-z0-9_-]+/i);
+        if (spShortMatch) {
+          return {
+            platform: 'spotify-short',
+            id: '',
+            canonicalUrl: spShortMatch[0],
+          };
+        }
+
+        // 4. Deezer track URL
+        const dzUrlMatch = text.match(/deezer\.com\/(?:[a-z]{2}\/)?track\/(\d+)/i);
+        if (dzUrlMatch) {
+          return {
+            platform: 'deezer',
+            id: dzUrlMatch[1],
+            canonicalUrl: `https://www.deezer.com/track/${dzUrlMatch[1]}`,
+          };
+        }
+
+        // 5. Apple Music track URL (?i=123456789)
+        const amTrackMatch = text.match(/music\.apple\.com\/[^\s]*[?&]i=(\d+)/i);
+        if (amTrackMatch) {
+          return {
+            platform: 'apple',
+            id: amTrackMatch[1],
+            canonicalUrl: text,
+          };
+        }
+
+        return null;
+      }
+
+      /**
+       * Detects whether the user entered a 12-character ISRC code directly (with optional ISRC: prefix or hyphens).
+       */
+      function detectIsrcQuery(rawQuery) {
+        const cleaned = String(rawQuery || '')
+          .trim()
+          .replace(/^isrc\s*:\s*/i, '')
+          .replace(/['"\s-]/g, '')
+          .toUpperCase();
+        return /^[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}$/.test(cleaned) ? cleaned : '';
+      }
+
+      /**
+       * Copies text to clipboard using iframe-safe execCommand fallback and Clipboard API.
+       */
+      async function copyToClipboard(text) {
+        // Hidden textarea + execCommand('copy') works reliably inside sandboxed iframes
+        try {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.setAttribute('readonly', '');
+          textarea.style.position = 'fixed';
+          textarea.style.top = '-9999px';
+          textarea.style.left = '-9999px';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          const success = document.execCommand('copy');
+          document.body.removeChild(textarea);
+          if (success) return true;
+        } catch (_) {
+          // Fall through to navigator.clipboard
+        }
+
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+          try {
+            await navigator.clipboard.writeText(text);
+            return true;
+          } catch (_) {
+            return false;
+          }
+        }
+        return false;
+      }
+
+      /**
+       * Displays a brief toast notification at the bottom of the screen.
+       */
+      function showToast(message) {
+        dom.toastMessage.textContent = message;
+        dom.toast.classList.remove('opacity-0', 'translate-y-4');
+        dom.toast.classList.add('opacity-100', 'translate-y-0');
+
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          dom.toast.classList.remove('opacity-100', 'translate-y-0');
+          dom.toast.classList.add('opacity-0', 'translate-y-4');
+        }, 2300);
+      }
+
+      /**
+       * Shows or hides the non-intrusive fallback/warning banner.
+       */
+      function showFallbackBanner(message) {
+        dom.fallbackMessage.textContent = message;
+        dom.fallbackBanner.classList.remove('hidden');
+        dom.fallbackBanner.classList.add('flex');
+      }
+
+      function hideFallbackBanner() {
+        dom.fallbackBanner.classList.add('hidden');
+        dom.fallbackBanner.classList.remove('flex');
+      }
+
+      /**
+       * Merges incoming track lists into existing tracks while deduplicating by ISRC or Title+Artist+Duration.
+       */
+      function mergeTracks(existingTracks, incomingTracks) {
+        const merged = [...existingTracks];
+        const newlyAdded = [];
+
+        for (const incoming of incomingTracks) {
+          const inKey = `${normalizeMatchKey(incoming.title)}||${normalizeMatchKey(incoming.artist)}`;
+          const duplicate = merged.find((ex) => {
+            if (ex.id === incoming.id) return true;
+            if (ex.isrcs.length > 0 && incoming.isrcs.length > 0) {
+              if (ex.isrcs.some((code) => incoming.isrcs.includes(code))) return true;
+            }
+            const exKey = `${normalizeMatchKey(ex.title)}||${normalizeMatchKey(ex.artist)}`;
+            if (inKey && exKey === inKey) {
+              if (!ex.durationSec || !incoming.durationSec) return true;
+              return Math.abs(ex.durationSec - incoming.durationSec) <= 3;
+            }
+            return false;
+          });
+
+          if (duplicate) {
+            const combinedIsrcs = normalizeIsrcList([...(duplicate.isrcs || []), ...(incoming.isrcs || [])]);
+            duplicate.isrcs = combinedIsrcs;
+            if (incoming.exactMatch) duplicate.exactMatch = true;
+            if (!duplicate.year && incoming.year) duplicate.year = incoming.year;
+            if (!duplicate.cover && incoming.cover) duplicate.cover = incoming.cover;
+            if (!duplicate.previewUrl && incoming.previewUrl) duplicate.previewUrl = incoming.previewUrl;
+            const srcSet = new Set(duplicate.sources || [duplicate.source]);
+            (incoming.sources || [incoming.source]).forEach((s) => srcSet.add(s));
+            duplicate.sources = Array.from(srcSet);
+          } else {
+            merged.push(incoming);
+            newlyAdded.push(incoming);
+          }
+        }
+
+        return { merged, newlyAdded };
+      }
+
+      // =========================================================================
+      // Network Helpers (Fetch with Timeout, CORS Relay, & JSONP)
+      // =========================================================================
+
+      async function fetchWithTimeout(url, timeoutMs = 6500, accept = 'application/json') {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const res = await fetch(url, {
+            headers: accept ? { Accept: accept } : undefined,
+            signal: controller.signal,
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res;
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+
+      async function fetchJsonWithCorsFallback(url, timeoutMs = 6500) {
+        try {
+          const res = await fetchWithTimeout(url, Math.min(4500, timeoutMs), 'application/json');
+          return await res.json();
+        } catch (_) {
+          // Proceed to public CORS relays
+        }
+
+        const relays = [
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        ];
+
+        for (const relayUrl of relays) {
+          try {
+            const res = await fetchWithTimeout(relayUrl, timeoutMs, 'application/json');
+            const text = await res.text();
+            if (!text || text.trim().startsWith('<')) continue;
+            return JSON.parse(text);
+          } catch (_) {
+            // Try next relay
+          }
+        }
+        return null;
+      }
+
+      async function fetchTextWithCorsFallback(url, timeoutMs = 6500) {
+        const relays = [
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        ];
+
+        for (const relayUrl of relays) {
+          try {
+            const res = await fetchWithTimeout(relayUrl, timeoutMs, 'text/html');
+            const text = await res.text();
+            if (text && text.length > 100) return text;
+          } catch (_) {
+            // Try next relay
+          }
+        }
+        return '';
+      }
+
+      /**
+       * CORS-free JSONP loader for Deezer and iTunes endpoints.
+       */
+      function fetchJsonp(url, timeoutMs = 8000) {
+        return new Promise((resolve, reject) => {
+          const callbackName = `__isrcJsonp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+          const script = document.createElement('script');
+          let settled = false;
+
+          const cleanup = () => {
+            if (timer) clearTimeout(timer);
+            try {
+              delete window[callbackName];
+            } catch (_) {
+              window[callbackName] = undefined;
+            }
+            if (script.parentNode) script.parentNode.removeChild(script);
+          };
+
+          const timer = setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            reject(new Error('JSONP request timed out'));
+          }, timeoutMs);
+
+          window[callbackName] = (data) => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            resolve(data);
+          };
+
+          script.onerror = () => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            reject(new Error('JSONP script failed to load'));
+          };
+
+          const separator = url.includes('?') ? '&' : '?';
+          script.src = `${url}${separator}callback=${callbackName}`;
+          script.async = true;
+          document.head.appendChild(script);
+        });
+      }
+
+      // =========================================================================
+      // Deezer API Integration (JSONP)
+      // =========================================================================
+
+      /**
+       * Builds a Deezer query string from song and optional artist fields.
+       */
+      function buildDeezerQuery(songQuery, artistQuery, strict = true) {
+        const song = String(songQuery || '')
+          .replace(/\s*[-–—|]\s*/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        const artist = String(artistQuery || '').trim();
+        if (song && artist) {
+          return strict
+            ? `track:"${song.replace(/"/g, '')}" artist:"${artist.replace(/"/g, '')}"`
+            : `${song} ${artist}`;
+        }
+        if (artist && !song) {
+          return strict ? `artist:"${artist.replace(/"/g, '')}"` : artist;
+        }
+        return song;
+      }
+
+      /**
+       * Maps a raw Deezer track payload into our normalized track structure.
+       */
+      function mapDeezerTrack(item) {
+        const isrcs = item && item.isrc ? normalizeIsrcList([item.isrc]) : [];
+        return {
+          id: `dz-${item.id}`,
+          rawId: String(item.id),
+          source: 'deezer',
+          sources: ['Deezer'],
+          title: item.title || item.title_short || 'Unknown Title',
+          artist: (item.artist && item.artist.name) || 'Unknown Artist',
+          album: (item.album && item.album.title) || 'Single / Unknown Album',
+          cover:
+            (item.album && (item.album.cover_medium || item.album.cover || item.album.cover_small)) ||
+            (item.artist && item.artist.picture_medium) ||
+            '',
+          durationSec: Number(item.duration) || 0,
+          year: extractYear(item.release_date || (item.album && item.album.release_date)),
+          explicit: Boolean(item.explicit_lyrics),
+          previewUrl: item.preview || '',
+          isrcs,
+          isrcLoading: isrcs.length === 0,
+          isrcError: false,
+          isrcChecked: isrcs.length > 0,
+          exactMatch: false,
+        };
+      }
+
+      /**
+       * Fetches a single Deezer track's full metadata (including ISRC and release date) with retries.
+       */
+      async function fetchDeezerTrackDetail(trackId, maxRetries = 2) {
+        let lastErr = null;
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+          try {
+            const url = `https://api.deezer.com/track/${encodeURIComponent(trackId)}?output=jsonp`;
+            const data = await fetchJsonp(url, 7000);
+            if (data && data.error) {
+              const code = data.error.code;
+              if (code === 4 && attempt < maxRetries) {
+                await sleep(450 * (attempt + 1));
+                continue;
+              }
+              throw new Error(data.error.message || 'Deezer track error');
+            }
+            return data;
+          } catch (err) {
+            lastErr = err;
+            if (attempt < maxRetries) {
+              await sleep(350 * (attempt + 1));
+            }
+          }
+        }
+        throw lastErr || new Error('Unable to fetch Deezer track detail');
+      }
+
+      /**
+       * Searches Deezer for a page of tracks, automatically broadening if strict query returns few results.
+       */
+      async function fetchDeezerPage(songQuery, artistQuery, offset = 0) {
+        const strictQuery = buildDeezerQuery(songQuery, artistQuery, true);
+        const strictUrl = `https://api.deezer.com/search?q=${encodeURIComponent(strictQuery)}&index=${offset}&limit=${PAGE_SIZE}&output=jsonp`;
+        let payload = await fetchJsonp(strictUrl, 8000);
+
+        if (payload && payload.error) {
+          throw new Error(payload.error.message || 'Deezer search returned an error');
+        }
+
+        let items = Array.isArray(payload && payload.data) ? payload.data : [];
+
+        // Auto-broaden on first page if strict search yielded very few matches
+        if (offset === 0 && items.length < 3) {
+          const broadQuery = artistQuery
+            ? buildDeezerQuery(songQuery, artistQuery, false)
+            : cleanFallbackQuery(songQuery);
+          if (broadQuery && broadQuery.toLowerCase() !== strictQuery.toLowerCase()) {
+            const broadUrl = `https://api.deezer.com/search?q=${encodeURIComponent(broadQuery)}&index=0&limit=${PAGE_SIZE}&output=jsonp`;
+            const broadPayload = await fetchJsonp(broadUrl, 8000).catch(() => null);
+            const broadItems = Array.isArray(broadPayload && broadPayload.data) ? broadPayload.data : [];
+            if (broadItems.length > items.length) {
+              payload = broadPayload;
+              items = broadItems;
+            }
+          }
+        }
+
+        const tracks = items.map((item) => mapDeezerTrack(item));
+        const total = Number(payload && payload.total) || tracks.length;
+        const hasMore = Boolean(payload && payload.next) || offset + tracks.length < total;
+        return { tracks, hasMore, nextOffset: offset + items.length };
+      }
+
+      /**
+       * Resolves full ISRC codes for Deezer search results in staggered batches to avoid rate limits.
+       */
+      async function resolveDeezerIsrcs(tracksToResolve, token) {
+        for (let i = 0; i < tracksToResolve.length; i += DEEZER_BATCH_SIZE) {
+          if (token !== state.searchToken) return;
+
+          const batch = tracksToResolve.slice(i, i + DEEZER_BATCH_SIZE);
+          await Promise.all(
+            batch.map(async (track) => {
+              try {
+                const detail = await fetchDeezerTrackDetail(track.rawId, 2);
+                if (token !== state.searchToken) return;
+                const found = detail && detail.isrc ? normalizeIsrcList([detail.isrc]) : [];
+                track.isrcs = normalizeIsrcList([...(track.isrcs || []), ...found]);
+                if (!track.year && detail && detail.release_date) {
+                  track.year = extractYear(detail.release_date);
+                }
+                track.isrcLoading = false;
+                track.isrcError = false;
+                track.isrcChecked = true;
+              } catch (_) {
+                if (token !== state.searchToken) return;
+                track.isrcLoading = false;
+                track.isrcError = true;
+              }
+              updateSingleTrackCard(track);
+            })
+          );
+
+          if (i + DEEZER_BATCH_SIZE < tracksToResolve.length) {
+            await sleep(DEEZER_BATCH_DELAY_MS);
+          }
+        }
+
+        if (token === state.searchToken) {
+          updateResultsMeta();
+          if (state.resolvedLink) renderSpotifyResolvedCard();
+        }
+      }
+
+      /**
+       * Retries ISRC lookup for a single Deezer track if initial fetch hit a rate limit.
+       */
+      async function retryDeezerTrackIsrc(trackId) {
+        const track = state.tracks.find((t) => t.id === trackId);
+        if (!track || track.isrcLoading) return;
+
+        const token = state.searchToken;
+        track.isrcLoading = true;
+        track.isrcError = false;
+        updateSingleTrackCard(track);
+
+        try {
+          const detail = await fetchDeezerTrackDetail(track.rawId, 2);
+          if (token !== state.searchToken) return;
+          const found = detail && detail.isrc ? normalizeIsrcList([detail.isrc]) : [];
+          track.isrcs = normalizeIsrcList([...(track.isrcs || []), ...found]);
+          if (!track.year && detail && detail.release_date) {
+            track.year = extractYear(detail.release_date);
+          }
+          track.isrcLoading = false;
+          track.isrcError = false;
+          track.isrcChecked = true;
+          if (found.length > 0) {
+            showToast(`Found ${formatIsrcForCopy(found[0])}`);
+          } else {
+            showToast('Deezer has no ISRC listed for this track.');
+          }
+        } catch (_) {
+          if (token !== state.searchToken) return;
+          track.isrcLoading = false;
+          track.isrcError = true;
+          showToast('Still rate-limited by Deezer — try again in a moment.');
+        }
+
+        updateSingleTrackCard(track);
+        updateResultsMeta();
+        if (state.resolvedLink) renderSpotifyResolvedCard();
+      }
+
+      // =========================================================================
+      // MusicBrainz API Integration (CORS-Open REST API)
+      // =========================================================================
+
+      /**
+       * Builds a readable artist credit string from MusicBrainz artist-credit array.
+       */
+      function formatMusicBrainzArtist(artistCredit) {
+        if (!Array.isArray(artistCredit) || artistCredit.length === 0) {
+          return 'Unknown Artist';
+        }
+        return (
+          artistCredit
+            .map((entry) => {
+              const name = entry.name || (entry.artist && entry.artist.name) || '';
+              const join = entry.joinphrase || '';
+              return `${name}${join}`;
+            })
+            .join('')
+            .trim() || 'Unknown Artist'
+        );
+      }
+
+      /**
+       * Extracts best album title and earliest release year from MusicBrainz releases.
+       */
+      function extractMusicBrainzReleaseInfo(recording) {
+        const releases = Array.isArray(recording && recording.releases) ? recording.releases : [];
+        if (releases.length === 0) {
+          return { album: 'Single / Recording', year: extractYear(recording && recording['first-release-date']) };
+        }
+        const preferred =
+          releases.find((r) => r.status === 'Official' && r.date) ||
+          releases.find((r) => r.status === 'Official') ||
+          releases[0];
+        const album = (preferred && preferred.title) || 'Single / Recording';
+        const year =
+          extractYear(recording && recording['first-release-date']) ||
+          extractYear(preferred && preferred.date);
+        return { album, year };
+      }
+
+      /**
+       * Maps a raw MusicBrainz recording into our normalized track structure.
+       */
+      function mapMusicBrainzRecording(rec) {
+        const isrcs = normalizeIsrcList(rec && rec.isrcs);
+        const releaseInfo = extractMusicBrainzReleaseInfo(rec);
+        return {
+          id: `mb-${rec.id}`,
+          rawId: String(rec.id),
+          source: 'musicbrainz',
+          sources: ['MusicBrainz'],
+          title: rec.title || 'Unknown Title',
+          artist: formatMusicBrainzArtist(rec['artist-credit']),
+          album: releaseInfo.album,
+          cover: '',
+          durationSec: rec.length ? Math.round(rec.length / 1000) : 0,
+          year: releaseInfo.year,
+          explicit: false,
+          previewUrl: '',
+          isrcs,
+          isrcLoading: false,
+          isrcError: false,
+          isrcChecked: isrcs.length > 0,
+          exactMatch: false,
+        };
+      }
+
+      /**
+       * Sends a single MusicBrainz recording search request.
+       */
+      async function requestMusicBrainzSearch(queryStr, offset = 0, useDismax = true) {
+        const dismaxParam = useDismax ? '&dismax=true' : '';
+        const url = `https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(queryStr)}&fmt=json&limit=${PAGE_SIZE}&offset=${offset}${dismaxParam}`;
+        const res = await fetchWithTimeout(url, 9000, 'application/json');
+        return await res.json();
+      }
+
+      /**
+       * Searches MusicBrainz with dismax natural-language matching, auto-broadening, and fuzzy fallback.
+       */
+      async function fetchMusicBrainzPage(songQuery, artistQuery, offset = 0) {
+        const cleanSong = sanitizeMusicBrainzQuery(songQuery);
+        const cleanArtist = sanitizeMusicBrainzQuery(artistQuery);
+
+        let queryStr = '';
+        let useDismax = true;
+
+        if (cleanSong && cleanArtist) {
+          queryStr = `recording:"${cleanSong}" AND artist:"${cleanArtist}"`;
+          useDismax = false;
+        } else if (cleanArtist && !cleanSong) {
+          queryStr = `artist:"${cleanArtist}"`;
+          useDismax = false;
+        } else {
+          queryStr = cleanSong;
+          useDismax = true;
+        }
+
+        if (!queryStr) {
+          return { tracks: [], hasMore: false, nextOffset: offset };
+        }
+
+        let payload = await requestMusicBrainzSearch(queryStr, offset, useDismax);
+        let recordings = Array.isArray(payload && payload.recordings) ? payload.recordings : [];
+
+        // Auto-broaden on page 0 if strict field search or noisy title returned too few results
+        if (offset === 0 && recordings.length < 3) {
+          const broadTerm = cleanArtist
+            ? `${cleanSong} ${cleanArtist}`.trim()
+            : sanitizeMusicBrainzQuery(cleanFallbackQuery(songQuery));
+          if (broadTerm && (broadTerm.toLowerCase() !== queryStr.toLowerCase() || !useDismax)) {
+            const broadPayload = await requestMusicBrainzSearch(broadTerm, 0, true).catch(() => null);
+            const broadRecs = Array.isArray(broadPayload && broadPayload.recordings)
+              ? broadPayload.recordings
+              : [];
+            if (broadRecs.length > recordings.length) {
+              payload = broadPayload;
+              recordings = broadRecs;
+            }
+          }
+
+          // Fuzzy fallback if still zero matches
+          if (recordings.length === 0) {
+            const words = (broadTerm || cleanSong)
+              .split(/\s+/)
+              .filter((w) => w.length >= 3)
+              .slice(0, 5);
+            if (words.length > 0) {
+              const fuzzyQuery = words.map((w) => `${w}~`).join(' ');
+              const fuzzyPayload = await requestMusicBrainzSearch(fuzzyQuery, 0, false).catch(() => null);
+              const fuzzyRecs = Array.isArray(fuzzyPayload && fuzzyPayload.recordings)
+                ? fuzzyPayload.recordings
+                : [];
+              if (fuzzyRecs.length > 0) {
+                payload = fuzzyPayload;
+                recordings = fuzzyRecs;
+              }
+            }
+          }
+        }
+
+        const tracks = recordings.map((rec) => mapMusicBrainzRecording(rec));
+        const total = Number(payload && payload.count) || tracks.length;
+        const hasMore = offset + recordings.length < total;
+        return { tracks, hasMore, nextOffset: offset + recordings.length };
+      }
+
+      /**
+       * On-demand detail lookup for a single MusicBrainz recording when initial search omitted ISRCs.
+       */
+      async function checkMusicBrainzTrackDetail(trackId, silent = false) {
+        const track = state.tracks.find((t) => t.id === trackId);
+        if (!track || track.isrcLoading) return;
+
+        const tokenAtStart = state.searchToken;
+        track.isrcLoading = true;
+        updateSingleTrackCard(track);
+
+        try {
+          const url = `https://musicbrainz.org/ws/2/recording/${encodeURIComponent(track.rawId)}?inc=isrcs+releases&fmt=json`;
+          const res = await fetchWithTimeout(url, 9000, 'application/json');
+          const detail = await res.json();
+
+          if (tokenAtStart !== state.searchToken) return;
+
+          const foundIsrcs = normalizeIsrcList(detail && detail.isrcs);
+          if (foundIsrcs.length > 0) {
+            track.isrcs = normalizeIsrcList([...(track.isrcs || []), ...foundIsrcs]);
+            if (!silent) showToast(`Found ${formatIsrcForCopy(foundIsrcs[0])}`);
+          } else if (!silent) {
+            showToast('No ISRC recorded in MusicBrainz for this entry.');
+          }
+
+          const releaseInfo = extractMusicBrainzReleaseInfo(detail);
+          if (!track.year && releaseInfo.year) track.year = releaseInfo.year;
+          track.isrcLoading = false;
+          track.isrcChecked = true;
+        } catch (_) {
+          if (tokenAtStart !== state.searchToken) return;
+          track.isrcLoading = false;
+          if (!silent) showToast('MusicBrainz rate-limited this check — try again in a second.');
+        }
+
+        updateSingleTrackCard(track);
+        updateResultsMeta();
+        if (state.resolvedLink) renderSpotifyResolvedCard();
+      }
+
+      // =========================================================================
+      // Spotify / Streaming URL Resolver (Zero API Key Multi-Layer Lookup)
+      // =========================================================================
+
+      /**
+       * Fetches Spotify track title + artwork from the official CORS-open oEmbed endpoint.
+       */
+      async function fetchSpotifyOEmbed(canonicalUrl) {
+        try {
+          const res = await fetchWithTimeout(
+            `https://open.spotify.com/oembed?url=${encodeURIComponent(canonicalUrl)}`,
+            6000,
+            'application/json'
+          );
+          return await res.json();
+        } catch (_) {
+          return null;
+        }
+      }
+
+      /**
+       * Queries Odesli / Songlink to cross-resolve a Spotify/Apple/short link into exact
+       * track title, artist name, and cross-platform Deezer track ID.
+       */
+      async function fetchSonglinkData(url) {
+        const apiUrl = `https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(url)}`;
+        const data = await fetchJsonWithCorsFallback(apiUrl, 6500);
+        if (!data || !data.entitiesByUniqueId) return null;
+
+        const entities = data.entitiesByUniqueId || {};
+        const primaryEntity = entities[data.entityUniqueId] || Object.values(entities)[0] || {};
+
+        let deezerTrackId = '';
+        const dzLink = data.linksByPlatform && data.linksByPlatform.deezer;
+        if (dzLink && dzLink.entityUniqueId) {
+          const idMatch = String(dzLink.entityUniqueId).match(/DEEZER_SONG::(\d+)/i);
+          if (idMatch) deezerTrackId = idMatch[1];
+        }
+        if (!deezerTrackId && dzLink && dzLink.url) {
+          const urlMatch = String(dzLink.url).match(/track\/(\d+)/i);
+          if (urlMatch) deezerTrackId = urlMatch[1];
+        }
+
+        let spotifyTrackId = '';
+        const spLink = data.linksByPlatform && data.linksByPlatform.spotify;
+        if (spLink && spLink.entityUniqueId) {
+          const spMatch = String(spLink.entityUniqueId).match(/SPOTIFY_SONG::([A-Za-z0-9]{22})/i);
+          if (spMatch) spotifyTrackId = spMatch[1];
+        }
+
+        return {
+          title: primaryEntity.title || '',
+          artist: primaryEntity.artistName || '',
+          cover: primaryEntity.thumbnailUrl || '',
+          deezerTrackId,
+          spotifyTrackId,
+          spotifyUrl: (spLink && spLink.url) || '',
+        };
+      }
+
+      /**
+       * Fallback extractor that parses Spotify's public embed page __NEXT_DATA__ for title, artist, and duration.
+       */
+      async function fetchSpotifyEmbedMeta(trackId) {
+        if (!trackId) return null;
+        const html = await fetchTextWithCorsFallback(
+          `https://open.spotify.com/embed/track/${encodeURIComponent(trackId)}`,
+          6000
+        );
+        if (!html) return null;
+
+        try {
+          const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/i);
+          if (!nextDataMatch) return null;
+          const nextJson = JSON.parse(nextDataMatch[1]);
+          const entity =
+            nextJson &&
+            nextJson.props &&
+            nextJson.props.pageProps &&
+            nextJson.props.pageProps.state &&
+            nextJson.props.pageProps.state.data &&
+            nextJson.props.pageProps.state.data.entity;
+          if (!entity) return null;
+
+          const artists = Array.isArray(entity.artists)
+            ? entity.artists.map((a) => a && a.name).filter(Boolean).join(', ')
+            : '';
+          const images =
+            entity.visualIdentity && Array.isArray(entity.visualIdentity.image)
+              ? entity.visualIdentity.image
+              : [];
+          const cover = (images[0] && images[0].url) || '';
+
+          return {
+            title: entity.name || entity.title || '',
+            artist: artists || entity.subtitle || '',
+            durationSec: entity.duration ? Math.round(entity.duration / 1000) : 0,
+            cover,
+          };
+        } catch (_) {
+          return null;
+        }
+      }
+
+      /**
+       * Checks MusicBrainz URL relationships for a direct link to the given Spotify track URL.
+       */
+      async function fetchMusicBrainzBySpotifyUrl(canonicalUrl) {
+        try {
+          const url = `https://musicbrainz.org/ws/2/url?resource=${encodeURIComponent(canonicalUrl)}&inc=recording-rels&fmt=json`;
+          const res = await fetchWithTimeout(url, 6500, 'application/json');
+          const data = await res.json();
+          const relations = Array.isArray(data && data.relations) ? data.relations : [];
+          const recIds = relations
+            .map((rel) => rel && rel.recording && rel.recording.id)
+            .filter(Boolean)
+            .slice(0, 3);
+
+          if (recIds.length === 0) return [];
+
+          const tracks = [];
+          for (const recId of recIds) {
+            try {
+              const recRes = await fetchWithTimeout(
+                `https://musicbrainz.org/ws/2/recording/${encodeURIComponent(recId)}?inc=isrcs+artists+releases&fmt=json`,
+                6500,
+                'application/json'
+              );
+              const recJson = await recRes.json();
+              const mapped = mapMusicBrainzRecording(recJson);
+              mapped.exactMatch = true;
+              tracks.push(mapped);
+            } catch (_) {
+              // Skip individual recording errors
+            }
+          }
+          return tracks;
+        } catch (_) {
+          return [];
+        }
+      }
+
+      /**
+       * Scores how closely a candidate track matches a resolved streaming link's metadata.
+       */
+      function scoreTrackMatch(track, target) {
+        let score = 0;
+        if (track.exactMatch) score += 1000;
+        if (track.isrcs && track.isrcs.length > 0) score += 25;
+
+        const targetTitle = normalizeMatchKey(target.title);
+        const targetArtist = normalizeMatchKey(target.artist);
+        const candTitle = normalizeMatchKey(track.title);
+        const candArtist = normalizeMatchKey(track.artist);
+
+        if (targetTitle && candTitle) {
+          if (candTitle === targetTitle) score += 120;
+          else if (candTitle.includes(targetTitle) || targetTitle.includes(candTitle)) score += 65;
+        }
+        if (targetArtist && candArtist) {
+          if (candArtist === targetArtist) score += 100;
+          else if (candArtist.includes(targetArtist) || targetArtist.includes(candArtist)) score += 55;
+        }
+        if (target.durationSec && track.durationSec) {
+          const diff = Math.abs(target.durationSec - track.durationSec);
+          if (diff <= 2) score += 45;
+          else if (diff <= 5) score += 20;
+        }
+        return score;
+      }
+
+      /**
+       * Clears the top resolved link card.
+       */
+      function clearSpotifyResolvedCard() {
+        state.resolvedLink = null;
+        dom.spotifyCardContainer.innerHTML = '';
+        dom.spotifyCardContainer.classList.add('hidden');
+      }
+
+      /**
+       * Renders the top "Resolved from Spotify / Streaming Link" summary card with an instant ISRC copy button.
+       */
+      function renderSpotifyResolvedCard() {
+        const info = state.resolvedLink;
+        if (!info) {
+          dom.spotifyCardContainer.classList.add('hidden');
+          return;
+        }
+
+        const bestTrack =
+          state.tracks.find((t) => t.exactMatch && t.isrcs && t.isrcs.length > 0) ||
+          state.tracks.find((t) => t.isrcs && t.isrcs.length > 0) ||
+          null;
+        const primaryIsrc = bestTrack ? bestTrack.isrcs[0] : '';
+        const stillResolving = state.isLoading || state.tracks.some((t) => t.isrcLoading);
+
+        const platformLabel =
+          info.platform === 'deezer'
+            ? 'Deezer Link Resolved'
+            : info.platform === 'apple'
+              ? 'Apple Music Link Resolved'
+              : 'Spotify Link Resolved';
+
+        let isrcActionHtml = '';
+        if (primaryIsrc) {
+          const formatted = formatIsrcForCopy(primaryIsrc);
+          isrcActionHtml = `
+            <div
+              data-copy-isrc="${escapeHtml(primaryIsrc)}"
+              title="Copy as ${escapeHtml(formatted)}"
+              class="isrc-copy-trigger group/badge inline-flex cursor-pointer items-center gap-2 rounded-xl border border-emerald-400/40 bg-slate-950/95 p-1.5 pl-3.5 shadow-lg shadow-emerald-500/10 transition hover:border-emerald-400"
+            >
+              <span class="font-mono text-sm font-bold tracking-wide"><span class="text-slate-400">ISRC:</span><span class="text-emerald-300">${escapeHtml(primaryIsrc)}</span></span>
+              <button
+                type="button"
+                data-copy-isrc="${escapeHtml(primaryIsrc)}"
+                aria-label="Copy ${escapeHtml(formatted)}"
+                class="copy-isrc-btn inline-flex min-h-[34px] items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-500 active:scale-95"
+              >
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span>Copy</span>
+              </button>
+            </div>
+          `;
+        } else if (stillResolving) {
+          isrcActionHtml = `
+            <div class="inline-flex items-center gap-2 rounded-xl border border-emerald-500/25 bg-slate-950/80 px-3.5 py-2.5 text-xs font-mono text-emerald-200">
+              <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-emerald-400/30 border-t-emerald-400"></span>
+              <span>Resolving ISRC code...</span>
+            </div>
+          `;
+        } else {
+          isrcActionHtml = `
+            <span class="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-xs text-slate-400">
+              Check matches below for ISRC
+            </span>
+          `;
+        }
+
+        const coverHtml = info.cover
+          ? `<img src="${escapeHtml(info.cover)}" alt="" class="h-14 w-14 shrink-0 rounded-xl border border-emerald-500/30 object-cover shadow-md" onerror="this.style.display='none';" />`
+          : `<div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+               <svg class="h-7 w-7 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                 <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.59 14.42a.62.62 0 0 1-.85.21c-2.34-1.43-5.28-1.75-8.75-.96a.62.62 0 1 1-.28-1.21c3.8-.87 7.05-.5 9.67 1.11.29.18.38.56.21.85zm1.22-2.72a.78.78 0 0 1-1.07.26c-2.68-1.65-6.77-2.12-9.94-1.16a.78.78 0 1 1-.45-1.49c3.62-1.1 8.12-.57 11.2 1.32.37.22.48.7.26 1.07zm.1-2.83C14.7 8.96 9.39 8.78 6.32 9.72a.93.93 0 1 1-.54-1.78c3.52-1.07 9.39-.86 13.09 1.33a.93.93 0 0 1-.96 1.6z"/>
+               </svg>
+             </div>`;
+
+        const embedSectionHtml =
+          info.spotifyId && info.showEmbed
+            ? `<div class="mt-3 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                 <iframe
+                   src="https://open.spotify.com/embed/track/${encodeURIComponent(info.spotifyId)}?theme=0"
+                   width="100%"
+                   height="80"
+                   frameborder="0"
+                   allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                   loading="lazy"
+                   title="Spotify track preview"
+                 ></iframe>
+               </div>`
+            : '';
+
+        dom.spotifyCardContainer.classList.remove('hidden');
+        dom.spotifyCardContainer.innerHTML = `
+          <div class="rounded-2xl border border-emerald-500/35 bg-gradient-to-br from-emerald-500/10 via-slate-900/90 to-indigo-500/10 p-4 shadow-xl shadow-black/30 backdrop-blur-xl animate-fadeUp">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex min-w-0 items-center gap-3.5">
+                ${coverHtml}
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300">
+                      <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                      ${escapeHtml(platformLabel)}
+                    </span>
+                    ${
+                      info.spotifyId
+                        ? `<button
+                             type="button"
+                             id="toggle-spotify-embed-btn"
+                             class="rounded-full border border-slate-700 bg-slate-900/80 px-2.5 py-0.5 text-[11px] font-medium text-slate-300 transition hover:border-emerald-400/50 hover:text-white"
+                           >
+                             ${info.showEmbed ? 'Hide Spotify Player' : 'Spotify Player'}
+                           </button>`
+                        : ''
+                    }
+                  </div>
+                  <h2 class="mt-1 truncate text-base font-bold text-white" title="${escapeHtml(info.title || 'Resolving track...')}">
+                    ${escapeHtml(info.title || 'Resolving track metadata...')}
+                  </h2>
+                  ${
+                    info.artist
+                      ? `<p class="truncate text-xs font-medium text-indigo-300 sm:text-sm">${escapeHtml(info.artist)}</p>`
+                      : ''
+                  }
+                </div>
+              </div>
+              <div class="flex shrink-0 items-center justify-end">
+                ${isrcActionHtml}
+              </div>
+            </div>
+            ${embedSectionHtml}
+          </div>
+        `;
+      }
+
+      /**
+       * Resolves a pasted Spotify, Deezer, or Apple Music song URL into its exact ISRC code.
+       */
+      async function searchByMusicUrl(parsedUrl, token) {
+        // Direct Deezer Track URL -> Immediate 1-hop exact ISRC
+        if (parsedUrl.platform === 'deezer') {
+          state.resolvedLink = {
+            platform: 'deezer',
+            title: 'Loading Deezer track...',
+            artist: '',
+            cover: '',
+            spotifyId: '',
+            showEmbed: false,
+          };
+          renderSpotifyResolvedCard();
+
+          const detail = await fetchDeezerTrackDetail(parsedUrl.id);
+          if (token !== state.searchToken) return;
+
+          const mapped = mapDeezerTrack(detail);
+          mapped.exactMatch = true;
+          mapped.isrcLoading = false;
+          mapped.isrcChecked = true;
+
+          state.resolvedLink.title = mapped.title;
+          state.resolvedLink.artist = mapped.artist;
+          state.resolvedLink.cover = mapped.cover;
+          state.tracks = [mapped];
+          state.activeResultSource = 'deezer';
+          state.isLoading = false;
+          renderSpotifyResolvedCard();
+          renderResults();
+          return;
+        }
+
+        // Spotify Track URL / URI / Short Link / Apple Music Link
+        const spotifyId = parsedUrl.platform === 'spotify' ? parsedUrl.id : '';
+        state.resolvedLink = {
+          platform: parsedUrl.platform === 'apple' ? 'apple' : 'spotify',
+          title: 'Resolving track from link...',
+          artist: '',
+          cover: '',
+          spotifyId,
+          showEmbed: false,
+        };
+        renderSpotifyResolvedCard();
+
+        // Step 1: Run Spotify oEmbed, Songlink cross-resolver, and MusicBrainz URL lookup in parallel
+        const [oembedRes, songlinkRes, mbUrlTracks] = await Promise.all([
+          parsedUrl.platform === 'spotify' ? fetchSpotifyOEmbed(parsedUrl.canonicalUrl) : Promise.resolve(null),
+          fetchSonglinkData(parsedUrl.canonicalUrl),
+          parsedUrl.platform === 'spotify'
+            ? fetchMusicBrainzBySpotifyUrl(parsedUrl.canonicalUrl)
+            : Promise.resolve([]),
+        ]);
+
+        if (token !== state.searchToken) return;
+
+        let title = (songlinkRes && songlinkRes.title) || (oembedRes && oembedRes.title) || '';
+        let artist = (songlinkRes && songlinkRes.artist) || '';
+        let cover = (songlinkRes && songlinkRes.cover) || (oembedRes && oembedRes.thumbnail_url) || '';
+        let durationSec = 0;
+        const resolvedSpotifyId = spotifyId || (songlinkRes && songlinkRes.spotifyTrackId) || '';
+        const deezerTrackId = (songlinkRes && songlinkRes.deezerTrackId) || '';
+
+        // Apple Music fallback via iTunes JSONP lookup
+        if (parsedUrl.platform === 'apple' && (!title || !artist)) {
+          try {
+            const itunesData = await fetchJsonp(
+              `https://itunes.apple.com/lookup?id=${encodeURIComponent(parsedUrl.id)}`,
+              7000
+            );
+            const first = itunesData && Array.isArray(itunesData.results) ? itunesData.results[0] : null;
+            if (first) {
+              title = title || first.trackName || '';
+              artist = artist || first.artistName || '';
+              cover = cover || first.artworkUrl100 || '';
+              durationSec = first.trackTimeMillis ? Math.round(first.trackTimeMillis / 1000) : 0;
+            }
+          } catch (_) {
+            // Continue with available metadata
+          }
+        }
+
+        // Step 2: If artist or title is still missing for Spotify, parse Spotify Embed __NEXT_DATA__
+        if (resolvedSpotifyId && (!title || !artist)) {
+          const embedMeta = await fetchSpotifyEmbedMeta(resolvedSpotifyId);
+          if (token !== state.searchToken) return;
+          if (embedMeta) {
+            title = title || embedMeta.title;
+            artist = artist || embedMeta.artist;
+            cover = cover || embedMeta.cover;
+            durationSec = durationSec || embedMeta.durationSec;
+          }
+        }
+
+        if (token !== state.searchToken) return;
+
+        state.resolvedLink = {
+          platform: parsedUrl.platform === 'apple' ? 'apple' : 'spotify',
+          title: title || 'Spotify Track',
+          artist,
+          cover,
+          spotifyId: resolvedSpotifyId,
+          showEmbed: false,
+        };
+        renderSpotifyResolvedCard();
+
+        // Step 3: Fetch exact Deezer track (if cross-matched) + parallel Deezer & MusicBrainz searches
+        const exactDzPromise = deezerTrackId
+          ? fetchDeezerTrackDetail(deezerTrackId)
+              .then((detail) => {
+                const mapped = mapDeezerTrack(detail);
+                mapped.exactMatch = true;
+                mapped.isrcLoading = false;
+                mapped.isrcChecked = true;
+                return [mapped];
+              })
+              .catch(() => [])
+          : Promise.resolve([]);
+
+        const dzSearchPromise = title
+          ? fetchDeezerPage(title, artist, 0)
+              .then((res) => res.tracks)
+              .catch(() => [])
+          : Promise.resolve([]);
+
+        const mbSearchPromise = title
+          ? fetchMusicBrainzPage(title, artist, 0)
+              .then((res) => res.tracks)
+              .catch(() => [])
+          : Promise.resolve([]);
+
+        const [exactDzTracks, dzSearchTracks, mbSearchTracks] = await Promise.all([
+          exactDzPromise,
+          dzSearchPromise,
+          mbSearchPromise,
+        ]);
+
+        if (token !== state.searchToken) return;
+
+        const exactLead = exactDzTracks[0] || mbUrlTracks[0];
+        if (exactLead) {
+          if (!state.resolvedLink.artist && exactLead.artist) state.resolvedLink.artist = exactLead.artist;
+          if ((!state.resolvedLink.title || state.resolvedLink.title === 'Spotify Track') && exactLead.title) {
+            state.resolvedLink.title = exactLead.title;
+          }
+          if (!state.resolvedLink.cover && exactLead.cover) state.resolvedLink.cover = exactLead.cover;
+        }
+
+        // Merge exact matches first, then catalog search matches
+        let combined = [];
+        combined = mergeTracks(combined, exactDzTracks).merged;
+        combined = mergeTracks(combined, mbUrlTracks).merged;
+        combined = mergeTracks(combined, dzSearchTracks).merged;
+        combined = mergeTracks(combined, mbSearchTracks).merged;
+
+        const targetMeta = {
+          title: state.resolvedLink.title,
+          artist: state.resolvedLink.artist,
+          durationSec,
+        };
+        combined.sort((a, b) => scoreTrackMatch(b, targetMeta) - scoreTrackMatch(a, targetMeta));
+
+        if (!title && combined.length === 0) {
+          throw new Error(
+            'Could not read metadata from that link. Make sure it is a public Spotify track URL (e.g. open.spotify.com/track/...) and try again.'
+          );
+        }
+
+        state.tracks = combined;
+        state.query = state.resolvedLink.title || parsedUrl.canonicalUrl;
+        state.activeResultSource = 'all';
+        state.isLoading = false;
+        renderSpotifyResolvedCard();
+        renderResults();
+
+        // Resolve remaining Deezer track ISRCs in background
+        const pendingDz = combined.filter((t) => t.source === 'deezer' && t.isrcLoading);
+        if (pendingDz.length > 0) {
+          resolveDeezerIsrcs(pendingDz, token).then(() => {
+            if (token === state.searchToken && state.resolvedLink) {
+              renderSpotifyResolvedCard();
+            }
+          });
+        }
+
+        // Automatically verify top 3 MusicBrainz entries if no ISRC is present yet
+        const hasAnyIsrc = combined.some((t) => t.isrcs && t.isrcs.length > 0);
+        if (!hasAnyIsrc) {
+          const topMbUnchecked = combined
+            .filter((t) => t.source === 'musicbrainz' && !t.isrcChecked)
+            .slice(0, 3);
+          for (const mbTrack of topMbUnchecked) {
+            if (token !== state.searchToken) return;
+            await checkMusicBrainzTrackDetail(mbTrack.id, true);
+            if (mbTrack.isrcs && mbTrack.isrcs.length > 0) break;
+            await sleep(450);
+          }
+          if (token === state.searchToken && state.resolvedLink) {
+            renderSpotifyResolvedCard();
+          }
+        }
+      }
+
+      // =========================================================================
+      // Direct 12-Character ISRC Reverse Lookup
+      // =========================================================================
+
+      async function searchByIsrcCode(isrcCode, token) {
+        const dzPromise = fetchJsonp(
+          `https://api.deezer.com/track/isrc:${encodeURIComponent(isrcCode)}?output=jsonp`,
+          7000
+        )
+          .then((data) => {
+            if (!data || data.error || !data.id) return [];
+            const mapped = mapDeezerTrack(data);
+            mapped.isrcs = normalizeIsrcList([...mapped.isrcs, isrcCode]);
+            mapped.isrcLoading = false;
+            mapped.isrcChecked = true;
+            mapped.exactMatch = true;
+            return [mapped];
+          })
+          .catch(() => []);
+
+        const mbPromise = fetchWithTimeout(
+          `https://musicbrainz.org/ws/2/isrc/${encodeURIComponent(isrcCode)}?inc=artists+releases&fmt=json`,
+          8000,
+          'application/json'
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            const recs = Array.isArray(data && data.recordings) ? data.recordings : [];
+            return recs.map((rec) => {
+              const mapped = mapMusicBrainzRecording(rec);
+              mapped.isrcs = normalizeIsrcList([...mapped.isrcs, isrcCode]);
+              mapped.isrcChecked = true;
+              mapped.exactMatch = true;
+              return mapped;
+            });
+          })
+          .catch(() => []);
+
+        const [dzTracks, mbTracks] = await Promise.all([dzPromise, mbPromise]);
+        if (token !== state.searchToken) return;
+
+        const combined = mergeTracks(dzTracks, mbTracks).merged;
+        state.tracks = combined;
+        state.activeResultSource = 'all';
+        state.isLoading = false;
+        renderResults();
+      }
+
+      // =========================================================================
+      // Main Search & Pagination Orchestrator
+      // =========================================================================
+
+      function resetPagination() {
+        state.pagination = {
+          dzOffset: 0,
+          dzHasMore: false,
+          mbOffset: 0,
+          mbHasMore: false,
+        };
+      }
+
+      async function performSearch(rawSongQuery, rawArtistQuery = '') {
+        const songQuery = String(rawSongQuery || '').trim();
+        const artistQuery = String(rawArtistQuery || '').trim();
+        if (!songQuery && !artistQuery) {
+          showToast('Please enter a song name, Spotify URL, or ISRC code.');
+          dom.input.focus();
+          return;
+        }
+
+        const token = ++state.searchToken;
+        stopAudioPreview();
+        hideFallbackBanner();
+        clearSpotifyResolvedCard();
+        resetPagination();
+
+        state.query = songQuery || artistQuery;
+        state.artistQuery = artistQuery;
+        state.isLoading = true;
+        state.error = null;
+        state.tracks = [];
+
+        setSearchButtonLoading(true);
+        updateLoadMoreUI();
+        renderLoadingSkeleton();
+
+        try {
+          // 1. Spotify / Deezer / Apple Music Track URL lookup
+          const parsedUrl = parseMusicUrl(songQuery);
+          if (parsedUrl) {
+            await searchByMusicUrl(parsedUrl, token);
+            return;
+          }
+
+          // 2. Direct 12-character ISRC reverse lookup when no artist filter is entered
+          const directIsrc = !artistQuery ? detectIsrcQuery(songQuery) : '';
+          if (directIsrc) {
+            await searchByIsrcCode(directIsrc, token);
+            return;
+          }
+
+          // 3. Standard Catalog Search (All Sources, Deezer only, or MusicBrainz only)
+          const src = state.preferredSource;
+
+          if (src === 'all') {
+            const [dzResult, mbResult] = await Promise.allSettled([
+              fetchDeezerPage(songQuery, artistQuery, 0),
+              fetchMusicBrainzPage(songQuery, artistQuery, 0),
+            ]);
+
+            if (token !== state.searchToken) return;
+
+            const dzOk = dzResult.status === 'fulfilled';
+            const mbOk = mbResult.status === 'fulfilled';
+
+            if (!dzOk && !mbOk) {
+              throw new Error(
+                'Unable to reach Deezer or MusicBrainz right now. Please check your internet connection and try again.'
+              );
+            }
+
+            const dzTracks = dzOk ? dzResult.value.tracks : [];
+            const mbTracks = mbOk ? mbResult.value.tracks : [];
+
+            if (dzOk) {
+              state.pagination.dzOffset = dzResult.value.nextOffset;
+              state.pagination.dzHasMore = dzResult.value.hasMore;
+            }
+            if (mbOk) {
+              state.pagination.mbOffset = mbResult.value.nextOffset;
+              state.pagination.mbHasMore = mbResult.value.hasMore;
+            }
+
+            if (!dzOk && mbOk) {
+              showFallbackBanner('Deezer is temporarily unreachable — showing results from MusicBrainz.');
+              state.activeResultSource = 'musicbrainz';
+            } else if (dzOk && !mbOk) {
+              showFallbackBanner('MusicBrainz is temporarily busy — showing results from Deezer.');
+              state.activeResultSource = 'deezer';
+            } else {
+              state.activeResultSource = 'all';
+            }
+
+            const { merged } = mergeTracks(dzTracks, mbTracks);
+            state.tracks = merged;
+            state.isLoading = false;
+            renderResults();
+
+            const pendingDz = merged.filter((t) => t.source === 'deezer' && t.isrcLoading);
+            if (pendingDz.length > 0) {
+              resolveDeezerIsrcs(pendingDz, token);
+            }
+          } else if (src === 'deezer') {
+            try {
+              const dzPage = await fetchDeezerPage(songQuery, artistQuery, 0);
+              if (token !== state.searchToken) return;
+
+              state.tracks = dzPage.tracks;
+              state.pagination.dzOffset = dzPage.nextOffset;
+              state.pagination.dzHasMore = dzPage.hasMore;
+              state.activeResultSource = 'deezer';
+              state.isLoading = false;
+              renderResults();
+
+              const pendingDz = dzPage.tracks.filter((t) => t.isrcLoading);
+              if (pendingDz.length > 0) {
+                resolveDeezerIsrcs(pendingDz, token);
+              }
+            } catch (_) {
+              // Automatic fallback to MusicBrainz if Deezer fails
+              const mbPage = await fetchMusicBrainzPage(songQuery, artistQuery, 0);
+              if (token !== state.searchToken) return;
+
+              showFallbackBanner('Deezer could not be reached — automatically switched to MusicBrainz.');
+              state.tracks = mbPage.tracks;
+              state.pagination.mbOffset = mbPage.nextOffset;
+              state.pagination.mbHasMore = mbPage.hasMore;
+              state.activeResultSource = 'musicbrainz';
+              state.isLoading = false;
+              renderResults();
+            }
+          } else {
+            const mbPage = await fetchMusicBrainzPage(songQuery, artistQuery, 0);
+            if (token !== state.searchToken) return;
+
+            state.tracks = mbPage.tracks;
+            state.pagination.mbOffset = mbPage.nextOffset;
+            state.pagination.mbHasMore = mbPage.hasMore;
+            state.activeResultSource = 'musicbrainz';
+            state.isLoading = false;
+            renderResults();
+          }
+        } catch (err) {
+          if (token !== state.searchToken) return;
+          state.isLoading = false;
+          state.error = err && err.message ? err.message : 'Something went wrong while searching.';
+          renderErrorState(state.error);
+          if (state.resolvedLink) renderSpotifyResolvedCard();
+        } finally {
+          if (token === state.searchToken) {
+            setSearchButtonLoading(false);
+            updateLoadMoreUI();
+          }
+        }
+      }
+
+      /**
+       * Loads the next page of tracks from active catalog sources.
+       */
+      async function loadMoreResults() {
+        if (state.isLoading || state.isLoadingMore) return;
+        const canDz = state.pagination.dzHasMore;
+        const canMb = state.pagination.mbHasMore;
+        if (!canDz && !canMb) return;
+
+        const token = state.searchToken;
+        state.isLoadingMore = true;
+        updateLoadMoreUI();
+
+        try {
+          const requests = [];
+          if (canDz) {
+            requests.push(
+              fetchDeezerPage(state.query, state.artistQuery, state.pagination.dzOffset)
+                .then((res) => ({ kind: 'dz', res }))
+                .catch(() => ({ kind: 'dz', res: null }))
+            );
+          }
+          if (canMb) {
+            requests.push(
+              fetchMusicBrainzPage(state.query, state.artistQuery, state.pagination.mbOffset)
+                .then((res) => ({ kind: 'mb', res }))
+                .catch(() => ({ kind: 'mb', res: null }))
+            );
+          }
+
+          const settled = await Promise.all(requests);
+          if (token !== state.searchToken) return;
+
+          let incoming = [];
+          for (const item of settled) {
+            if (item.kind === 'dz') {
+              if (item.res) {
+                state.pagination.dzOffset = item.res.nextOffset;
+                state.pagination.dzHasMore = item.res.hasMore;
+                incoming = incoming.concat(item.res.tracks);
+              } else {
+                state.pagination.dzHasMore = false;
+              }
+            }
+            if (item.kind === 'mb') {
+              if (item.res) {
+                state.pagination.mbOffset = item.res.nextOffset;
+                state.pagination.mbHasMore = item.res.hasMore;
+                incoming = incoming.concat(item.res.tracks);
+              } else {
+                state.pagination.mbHasMore = false;
+              }
+            }
+          }
+
+          const { merged, newlyAdded } = mergeTracks(state.tracks, incoming);
+          state.tracks = merged;
+          state.isLoadingMore = false;
+          renderResults();
+          updateLoadMoreUI();
+
+          const pendingDz = newlyAdded.filter((t) => t.source === 'deezer' && t.isrcLoading);
+          if (pendingDz.length > 0) {
+            resolveDeezerIsrcs(pendingDz, token);
+          }
+        } catch (_) {
+          if (token !== state.searchToken) return;
+          state.isLoadingMore = false;
+          updateLoadMoreUI();
+          showToast('Could not load additional songs right now.');
+        }
+      }
+
+      // =========================================================================
+      // Audio Preview Controls (30-Second Snippets)
+      // =========================================================================
+
+      function stopAudioPreview() {
+        const previousId = state.playingTrackId;
+        dom.audioPlayer.pause();
+        dom.audioPlayer.removeAttribute('src');
+        dom.audioPlayer.load();
+        state.playingTrackId = null;
+        state.audioProgress = 0;
+        if (previousId) {
+          const prevTrack = state.tracks.find((t) => t.id === previousId);
+          if (prevTrack) updateSingleTrackCard(prevTrack);
+        }
+      }
+
+      function toggleAudioPreview(trackId) {
+        const track = state.tracks.find((t) => t.id === trackId);
+        if (!track || !track.previewUrl) return;
+
+        if (state.playingTrackId === trackId) {
+          stopAudioPreview();
+          return;
+        }
+
+        const prevId = state.playingTrackId;
+        state.playingTrackId = trackId;
+        state.audioProgress = 0;
+
+        if (prevId) {
+          const prevTrack = state.tracks.find((t) => t.id === prevId);
+          if (prevTrack) updateSingleTrackCard(prevTrack);
+        }
+
+        dom.audioPlayer.src = track.previewUrl;
+        dom.audioPlayer.play().catch(() => {
+          stopAudioPreview();
+          showToast('Audio preview is unavailable for this track.');
+        });
+        updateSingleTrackCard(track);
+      }
+
+      dom.audioPlayer.addEventListener('timeupdate', () => {
+        if (!state.playingTrackId || !dom.audioPlayer.duration) return;
+        const pct = Math.min(100, Math.round((dom.audioPlayer.currentTime / dom.audioPlayer.duration) * 100));
+        state.audioProgress = pct;
+        const bar = document.querySelector(`[data-progress-for="${CSS.escape(state.playingTrackId)}"]`);
+        if (bar) bar.style.width = `${pct}%`;
+      });
+
+      dom.audioPlayer.addEventListener('ended', () => {
+        stopAudioPreview();
+      });
+
+      dom.audioPlayer.addEventListener('error', () => {
+        if (state.playingTrackId) {
+          stopAudioPreview();
+        }
+      });
+
+      // =========================================================================
+      // UI Rendering Helpers
+      // =========================================================================
+
+      function renderSourceToggle() {
+        dom.sourceBtns.forEach((btn) => {
+          const active = btn.getAttribute('data-source') === state.preferredSource;
+          if (active) {
+            btn.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+            btn.classList.remove('text-slate-400', 'hover:text-slate-200');
+          } else {
+            btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+            btn.classList.add('text-slate-400', 'hover:text-slate-200');
+          }
+        });
+      }
+
+      function syncClearButton() {
+        const hasVal = dom.input.value.trim().length > 0 || dom.artistInput.value.trim().length > 0;
+        dom.clearBtn.classList.toggle('hidden', !hasVal);
+      }
+
+      function setSearchButtonLoading(loading) {
+        dom.searchBtn.disabled = loading;
+        dom.searchBtnLabel.textContent = loading ? 'Searching...' : 'Search';
+      }
+
+      function updateLoadMoreUI() {
+        const hasMore =
+          !state.isLoading &&
+          !state.resolvedLink &&
+          state.tracks.length > 0 &&
+          (state.pagination.dzHasMore || state.pagination.mbHasMore);
+
+        dom.loadMoreContainer.classList.toggle('hidden', !hasMore);
+        dom.loadMoreContainer.classList.toggle('flex', hasMore);
+        dom.loadMoreBtn.disabled = state.isLoadingMore;
+        dom.loadMoreLabel.textContent = state.isLoadingMore ? 'Loading more songs...' : 'Load More Songs';
+      }
+
+      function getFilteredTracks() {
+        if (!state.onlyWithIsrc) return state.tracks;
+        return state.tracks.filter((t) => (t.isrcs && t.isrcs.length > 0) || t.isrcLoading);
+      }
+
+      function updateResultsMeta() {
+        if (state.isLoading || state.error || state.tracks.length === 0) {
+          dom.resultsMeta.classList.add('hidden');
+          dom.resultsMeta.classList.remove('flex');
+          return;
+        }
+
+        const visible = getFilteredTracks();
+        const withIsrcCount = state.tracks.filter((t) => t.isrcs && t.isrcs.length > 0).length;
+        const pendingCount = state.tracks.filter((t) => t.isrcLoading).length;
+
+        let summary = `Showing ${visible.length} of ${state.tracks.length} songs`;
+        if (pendingCount > 0) {
+          summary += ` • Resolving ${pendingCount} ISRC${pendingCount === 1 ? '' : 's'}...`;
+        } else {
+          summary += ` • ${withIsrcCount} with ISRC`;
+        }
+
+        dom.resultsCount.textContent = summary;
+
+        const sourceMap = {
+          all: 'Deezer + MusicBrainz',
+          deezer: 'Deezer Catalog',
+          musicbrainz: 'MusicBrainz Open DB',
+        };
+        dom.resultsSourceBadge.textContent = sourceMap[state.activeResultSource] || 'Global Catalog';
+
+        dom.resultsMeta.classList.remove('hidden');
+        dom.resultsMeta.classList.add('flex');
+      }
+
+      function renderLoadingSkeleton() {
+        dom.resultsMeta.classList.add('hidden');
+        dom.resultsMeta.classList.remove('flex');
+
+        const cards = Array.from({ length: 5 }, () => `
+          <div class="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-4">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex items-center gap-3.5">
+                <div class="h-14 w-14 shrink-0 animate-pulse rounded-xl bg-slate-800"></div>
+                <div class="space-y-2">
+                  <div class="h-4 w-44 animate-pulse rounded-md bg-slate-800"></div>
+                  <div class="h-3 w-32 animate-pulse rounded-md bg-slate-800/80"></div>
+                  <div class="h-3 w-24 animate-pulse rounded-md bg-slate-800/60"></div>
+                </div>
+              </div>
+              <div class="h-10 w-44 animate-pulse rounded-xl bg-slate-800"></div>
+            </div>
+          </div>
+        `).join('');
+
+        dom.resultsContainer.innerHTML = cards;
+      }
+
+      function renderErrorState(message) {
+        dom.resultsMeta.classList.add('hidden');
+        dom.resultsMeta.classList.remove('flex');
+
+        dom.resultsContainer.innerHTML = `
+          <div class="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-6 text-center">
+            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <h3 class="mt-3 text-sm font-semibold text-rose-200">Search could not be completed</h3>
+            <p class="mt-1 text-xs leading-relaxed text-rose-300/80">${escapeHtml(message)}</p>
+          </div>
+        `;
+      }
+
+      /**
+       * Renders the ISRC badge / loading / retry / check-DB controls for a single track card.
+       */
+      function renderIsrcSectionHtml(track) {
+        if (track.isrcLoading) {
+          return `
+            <div class="inline-flex items-center gap-2 rounded-xl border border-indigo-500/25 bg-slate-950/80 px-3.5 py-2.5 text-xs font-mono text-indigo-200">
+              <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-indigo-400/30 border-t-indigo-400"></span>
+              <span>Fetching ISRC...</span>
+            </div>
+          `;
+        }
+
+        if (track.isrcs && track.isrcs.length > 0) {
+          return `
+            <div class="flex flex-wrap items-center justify-end gap-2">
+              ${track.isrcs
+                .map((code) => {
+                  const formatted = formatIsrcForCopy(code);
+                  return `
+                    <div
+                      data-copy-isrc="${escapeHtml(code)}"
+                      title="Copy as ${escapeHtml(formatted)}"
+                      class="isrc-copy-trigger group/badge inline-flex cursor-pointer items-center gap-2 rounded-xl border border-indigo-500/35 bg-slate-950/90 p-1.5 pl-3 shadow-sm transition hover:border-indigo-400/80 hover:bg-slate-950"
+                    >
+                      <span class="font-mono text-xs font-semibold tracking-wide sm:text-sm">
+                        <span class="text-slate-400">ISRC:</span><span class="text-indigo-300">${escapeHtml(code)}</span>
+                      </span>
+                      <button
+                        type="button"
+                        data-copy-isrc="${escapeHtml(code)}"
+                        aria-label="Copy ${escapeHtml(formatted)}"
+                        class="copy-isrc-btn inline-flex min-h-[32px] items-center gap-1.5 rounded-lg bg-slate-800/90 px-2.5 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-indigo-600 hover:text-white group-hover/badge:bg-indigo-600/90 group-hover/badge:text-white active:scale-95"
+                      >
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span>Copy</span>
+                      </button>
+                    </div>
+                  `;
+                })
+                .join('')}
+            </div>
+          `;
+        }
+
+        if (track.isrcError && track.source === 'deezer') {
+          return `
+            <div class="flex items-center gap-2">
+              <span class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-300">
+                Lookup delayed
+              </span>
+              <button
+                type="button"
+                data-retry-dz="${escapeHtml(track.id)}"
+                class="retry-dz-btn inline-flex min-h-[34px] items-center gap-1.5 rounded-xl border border-indigo-500/40 bg-indigo-500/15 px-3 py-1.5 text-xs font-semibold text-indigo-200 transition hover:bg-indigo-500/25 active:scale-95"
+              >
+                Retry ISRC
+              </button>
+            </div>
+          `;
+        }
+
+        if (track.source === 'musicbrainz' && !track.isrcChecked) {
+          return `
+            <div class="flex items-center gap-2">
+              <span class="rounded-lg border border-slate-800 bg-slate-950/60 px-2.5 py-1.5 text-xs text-slate-500">
+                Not in preview
+              </span>
+              <button
+                type="button"
+                data-check-mb="${escapeHtml(track.id)}"
+                class="check-mb-btn inline-flex min-h-[34px] items-center gap-1.5 rounded-xl border border-indigo-500/40 bg-indigo-500/15 px-3 py-1.5 text-xs font-semibold text-indigo-200 transition hover:bg-indigo-500/25 active:scale-95"
+              >
+                Check DB
+              </button>
+            </div>
+          `;
+        }
+
+        return `
+          <span class="inline-flex items-center rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-xs font-medium text-slate-500">
+            No ISRC listed
+          </span>
+        `;
+      }
+
+      /**
+       * Renders HTML for a single track card.
+       */
+      function renderTrackCardHtml(track) {
+        const isPlaying = state.playingTrackId === track.id;
+        const durationLabel = formatDuration(track.durationSec);
+        const metaParts = [track.album, track.year, durationLabel].filter(Boolean);
+        const sourceLabel = (track.sources || [track.source]).join(' + ');
+
+        const artworkHtml = track.cover
+          ? `<img
+               src="${escapeHtml(track.cover)}"
+               alt=""
+               loading="lazy"
+               class="h-14 w-14 shrink-0 rounded-xl border border-slate-700/70 bg-slate-800 object-cover"
+               onerror="this.src='https://placehold.co/112x112/1e293b/94a3b8?text=Track';"
+             />`
+          : `<div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-800/80 text-slate-400">
+               <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                 <path d="M9 18V5l12-2v13"></path>
+                 <circle cx="6" cy="18" r="3"></circle>
+                 <circle cx="18" cy="16" r="3"></circle>
+               </svg>
+             </div>`;
+
+        const previewBtnHtml = track.previewUrl
+          ? `<button
+               type="button"
+               data-preview-id="${escapeHtml(track.id)}"
+               aria-label="${isPlaying ? 'Pause audio preview' : 'Play 30 second audio preview'}"
+               title="${isPlaying ? 'Pause preview' : 'Play 30s preview'}"
+               class="preview-btn absolute inset-0 flex items-center justify-center rounded-xl bg-slate-950/60 text-white transition ${
+                 isPlaying ? 'opacity-100 ring-2 ring-indigo-400' : 'opacity-0 group-hover/art:opacity-100 focus:opacity-100'
+               }"
+             >
+               ${
+                 isPlaying
+                   ? `<svg class="h-5 w-5 fill-current" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>`
+                   : `<svg class="h-5 w-5 translate-x-0.5 fill-current" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>`
+               }
+             </button>`
+          : '';
+
+        return `
+          <article
+            data-track-id="${escapeHtml(track.id)}"
+            class="animate-fadeUp relative overflow-hidden rounded-2xl border ${
+              track.exactMatch ? 'border-emerald-500/40 bg-slate-900/85' : 'border-slate-800/80 bg-slate-900/70'
+            } p-4 shadow-lg shadow-black/20 transition hover:border-slate-700"
+          >
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <!-- Track Metadata -->
+              <div class="flex min-w-0 items-center gap-3.5">
+                <div class="group/art relative shrink-0">
+                  ${artworkHtml}
+                  ${previewBtnHtml}
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="truncate text-sm font-semibold text-white sm:text-base" title="${escapeHtml(track.title)}">
+                      ${escapeHtml(track.title)}
+                    </h3>
+                    ${
+                      track.exactMatch
+                        ? `<span class="inline-flex items-center gap-1 rounded-md border border-emerald-500/40 bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300">Exact Match</span>`
+                        : ''
+                    }
+                    ${
+                      track.explicit
+                        ? `<span class="inline-flex h-4 items-center rounded bg-slate-800 px-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400" title="Explicit lyrics">E</span>`
+                        : ''
+                    }
+                  </div>
+
+                  <p class="mt-0.5 truncate text-xs font-medium text-indigo-300 sm:text-sm" title="${escapeHtml(track.artist)}">
+                    ${escapeHtml(track.artist)}
+                  </p>
+
+                  <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400">
+                    ${metaParts.map((p) => `<span class="truncate max-w-[200px]">${escapeHtml(p)}</span>`).join('<span class="text-slate-600">•</span>')}
+                    <span class="rounded bg-slate-800/80 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">${escapeHtml(sourceLabel)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ISRC Code & Actions -->
+              <div class="flex shrink-0 items-center justify-end">
+                ${renderIsrcSectionHtml(track)}
+              </div>
+            </div>
+
+            <!-- Live Audio Progress Bar -->
+            ${
+              isPlaying
+                ? `<div class="absolute bottom-0 left-0 right-0 h-1 bg-slate-800">
+                     <div data-progress-for="${escapeHtml(track.id)}" class="h-full bg-indigo-500 transition-all duration-150" style="width: ${state.audioProgress}%"></div>
+                   </div>`
+                : ''
+            }
+          </article>
+        `;
+      }
+
+      /**
+       * Re-renders the entire results list based on current state and filters.
+       */
+      function renderResults() {
+        updateResultsMeta();
+        updateLoadMoreUI();
+
+        const visibleTracks = getFilteredTracks();
+        if (visibleTracks.length === 0) {
+          const message =
+            state.tracks.length > 0 && state.onlyWithIsrc
+              ? 'None of the loaded tracks have an ISRC listed yet. Try turning off "Only with ISRC" or clicking "Load More Songs".'
+              : 'No matching songs were found. Try simplifying the song title, adding the artist name, or pasting the Spotify track URL directly.';
+          dom.resultsContainer.innerHTML = `
+            <div class="rounded-2xl border border-slate-800/80 bg-slate-900/50 px-6 py-12 text-center">
+              <h3 class="text-sm font-semibold text-slate-200">No songs to display</h3>
+              <p class="mx-auto mt-1.5 max-w-md text-xs leading-relaxed text-slate-400">${escapeHtml(message)}</p>
+            </div>
+          `;
+          return;
+        }
+
+        dom.resultsContainer.innerHTML = visibleTracks.map((t) => renderTrackCardHtml(t)).join('');
+      }
+
+      /**
+       * Efficiently replaces a single track card in the DOM when its ISRC or playback state updates.
+       */
+      function updateSingleTrackCard(track) {
+        const card = dom.resultsContainer.querySelector(`[data-track-id="${CSS.escape(track.id)}"]`);
+        if (!card) {
+          if (state.onlyWithIsrc && track.isrcs && track.isrcs.length > 0) {
+            renderResults();
+          }
+          return;
+        }
+
+        if (state.onlyWithIsrc && (!track.isrcs || track.isrcs.length === 0) && !track.isrcLoading) {
+          renderResults();
+          return;
+        }
+
+        const temp = document.createElement('div');
+        temp.innerHTML = renderTrackCardHtml(track).trim();
+        const freshCard = temp.firstElementChild;
+        freshCard.classList.remove('animate-fadeUp');
+        card.replaceWith(freshCard);
+        updateResultsMeta();
+        if (state.resolvedLink) renderSpotifyResolvedCard();
+      }
+
+      // =========================================================================
+      // Event Handlers
+      // =========================================================================
+
+      // Search Form Submit
+      dom.form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        performSearch(dom.input.value, dom.artistInput.value);
+      });
+
+      // Input Change -> Toggle Clear Button
+      dom.input.addEventListener('input', () => {
+        syncClearButton();
+      });
+
+      // Auto-trigger lookup immediately when pasting a Spotify, Deezer, or Apple Music song link
+      dom.input.addEventListener('paste', () => {
+        setTimeout(() => {
+          syncClearButton();
+          const pasted = dom.input.value.trim();
+          if (parseMusicUrl(pasted)) {
+            dom.artistInput.value = '';
+            performSearch(pasted, '');
+          }
+        }, 50);
+      });
+
+      dom.artistInput.addEventListener('input', () => {
+        syncClearButton();
+      });
+
+      // Clear Button
+      dom.clearBtn.addEventListener('click', () => {
+        dom.input.value = '';
+        dom.artistInput.value = '';
+        syncClearButton();
+        dom.input.focus();
+      });
+
+      // Example Search Chips
+      dom.exampleChips.forEach((chip) => {
+        chip.addEventListener('click', () => {
+          const query = chip.getAttribute('data-query') || '';
+          dom.input.value = query;
+          dom.artistInput.value = '';
+          syncClearButton();
+          performSearch(query, '');
+        });
+      });
+
+      // Source Toggle Buttons
+      dom.sourceBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const nextSource = btn.getAttribute('data-source');
+          if (!nextSource || nextSource === state.preferredSource) return;
+          state.preferredSource = nextSource;
+          renderSourceToggle();
+          if (dom.input.value.trim() || dom.artistInput.value.trim()) {
+            performSearch(dom.input.value, dom.artistInput.value);
+          }
+        });
+      });
+
+      // Only Show Tracks With ISRC Toggle
+      dom.onlyIsrcToggle.addEventListener('change', () => {
+        state.onlyWithIsrc = dom.onlyIsrcToggle.checked;
+        if (state.tracks.length > 0 && !state.isLoading) {
+          renderResults();
+        }
+      });
+
+      // Load More Pagination Button
+      dom.loadMoreBtn.addEventListener('click', () => {
+        loadMoreResults();
+      });
+
+      // Dismiss Fallback Banner
+      dom.dismissFallback.addEventListener('click', hideFallbackBanner);
+
+      // Shared Copy Handler for Results List & Spotify Resolved Card
+      async function handleIsrcCopyTrigger(copyTrigger) {
+        const code = copyTrigger.getAttribute('data-copy-isrc');
+        if (!code) return;
+
+        const formatted = formatIsrcForCopy(code);
+        const copied = await copyToClipboard(formatted);
+        if (copied) {
+          showToast(`Copied ${formatted}`);
+          const copyBtn = copyTrigger.querySelector('.copy-isrc-btn');
+          if (copyBtn) {
+            if (!copyBtn._defaultHtml) {
+              copyBtn._defaultHtml = copyBtn.innerHTML;
+            }
+            const wasEmerald = copyBtn.classList.contains('bg-emerald-600');
+            copyBtn.classList.remove(
+              'bg-slate-800/90',
+              'text-slate-200',
+              'hover:bg-indigo-600',
+              'group-hover/badge:bg-indigo-600/90'
+            );
+            copyBtn.classList.add('bg-emerald-600', 'text-white');
+            copyBtn.innerHTML = `
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Copied!</span>
+            `;
+
+            if (copyBtn._resetTimer) clearTimeout(copyBtn._resetTimer);
+            copyBtn._resetTimer = setTimeout(() => {
+              if (!wasEmerald) {
+                copyBtn.classList.remove('bg-emerald-600', 'text-white');
+                copyBtn.classList.add(
+                  'bg-slate-800/90',
+                  'text-slate-200',
+                  'hover:bg-indigo-600',
+                  'group-hover/badge:bg-indigo-600/90'
+                );
+              }
+              copyBtn.innerHTML = copyBtn._defaultHtml;
+            }, 1800);
+          }
+        } else {
+          showToast('Unable to copy automatically — please select the code manually.');
+        }
+      }
+
+      // Event Delegation Inside Resolved Spotify Card
+      dom.spotifyCardContainer.addEventListener('click', async (e) => {
+        const copyTrigger = e.target.closest('.isrc-copy-trigger');
+        if (copyTrigger) {
+          await handleIsrcCopyTrigger(copyTrigger);
+          return;
+        }
+
+        if (e.target.closest('#toggle-spotify-embed-btn') && state.resolvedLink) {
+          state.resolvedLink.showEmbed = !state.resolvedLink.showEmbed;
+          renderSpotifyResolvedCard();
+        }
+      });
+
+      // Event Delegation Inside Results Container
+      dom.resultsContainer.addEventListener('click', async (e) => {
+        // 1. Copy ISRC (clicking either the badge or Copy button)
+        const copyTrigger = e.target.closest('.isrc-copy-trigger');
+        if (copyTrigger) {
+          await handleIsrcCopyTrigger(copyTrigger);
+          return;
+        }
+
+        // 2. Audio Preview Toggle
+        const previewBtn = e.target.closest('.preview-btn');
+        if (previewBtn) {
+          const trackId = previewBtn.getAttribute('data-preview-id');
+          if (trackId) toggleAudioPreview(trackId);
+          return;
+        }
+
+        // 3. Retry Deezer ISRC Lookup
+        const retryDzBtn = e.target.closest('.retry-dz-btn');
+        if (retryDzBtn) {
+          const trackId = retryDzBtn.getAttribute('data-retry-dz');
+          if (trackId) retryDeezerTrackIsrc(trackId);
+          return;
+        }
+
+        // 4. On-Demand MusicBrainz Detail Check
+        const checkMbBtn = e.target.closest('.check-mb-btn');
+        if (checkMbBtn) {
+          const trackId = checkMbBtn.getAttribute('data-check-mb');
+          if (trackId) checkMusicBrainzTrackDetail(trackId);
+        }
+      });
+
+      // Initialize UI Controls
+      renderSourceToggle();
+      syncClearButton();
+    })();
+  </script>
+</body>
+</html>
